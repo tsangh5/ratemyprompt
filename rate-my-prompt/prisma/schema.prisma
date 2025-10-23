@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id // Clerk user ID (use clerkId as primary key)
+  email     String   @unique
+  name      String?
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  prompts   Prompt[]
+  ratings   Rating[]
+}
+
+model Prompt {
+  id        String   @id @default(cuid())
+  title     String
+  text      String
+  tags      String[] // Postgres array
+  authorId  String?
+  author    User?     @relation(fields: [authorId], references: [id])
+  ratings   Rating[]
+  createdAt DateTime @default(now())
+}
+
+model Rating {
+  id        String   @id @default(cuid())
+  llm       String
+  score     Int
+  comment   String?
+  prompt    Prompt    @relation(fields: [promptId], references: [id])
+  promptId  String
+  user      User?     @relation(fields: [userId], references: [id])
+  userId    String?
+  createdAt DateTime @default(now())
+}
