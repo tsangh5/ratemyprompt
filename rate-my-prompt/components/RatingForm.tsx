@@ -59,18 +59,18 @@ export function RatingForm({ promptId, onSuccess }: RatingFormProps) {
 
   if (!isSignedIn) {
     return (
-      <div className="p-4 bg-gray-50 rounded-lg text-center">
-        <p className="text-gray-600">Please sign in to rate this prompt</p>
+      <div className="p-4 bg-gradient-to-br from-gray-900 to-black border border-gray-800 rounded-lg text-center">
+        <p className="text-gray-400">Please sign in to rate this prompt</p>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-4 bg-gray-50 rounded-lg">
-      <h3 className="text-lg font-semibold">Rate this prompt</h3>
+    <form onSubmit={handleSubmit} className="space-y-4 p-4 bg-gradient-to-br from-gray-900 to-black border border-gray-800 rounded-lg">
+      <h3 className="text-lg font-semibold text-white">Rate this prompt</h3>
 
       <div>
-        <label htmlFor="llm" className="block text-sm font-medium mb-1">
+        <label htmlFor="llm" className="block text-sm font-medium mb-1 text-gray-300">
           LLM Used *
         </label>
         <select
@@ -78,7 +78,7 @@ export function RatingForm({ promptId, onSuccess }: RatingFormProps) {
           required
           value={formData.llm}
           onChange={(e) => setFormData({ ...formData, llm: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 bg-black border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-600 text-white"
         >
           <option value="">Select an LLM</option>
           <option value="GPT-4">GPT-4</option>
@@ -94,7 +94,7 @@ export function RatingForm({ promptId, onSuccess }: RatingFormProps) {
       </div>
 
       <div>
-        <label htmlFor="score" className="block text-sm font-medium mb-1">
+        <label htmlFor="score" className="block text-sm font-medium mb-1 text-gray-300">
           Score (1-5) *
         </label>
         <div className="flex gap-2">
@@ -103,10 +103,10 @@ export function RatingForm({ promptId, onSuccess }: RatingFormProps) {
               key={num}
               type="button"
               onClick={() => setFormData({ ...formData, score: num })}
-              className={`w-12 h-12 rounded-md font-semibold transition-colors ${
+              className={`w-12 h-12 rounded-md font-semibold transition-all ${
                 formData.score === num
-                  ? "bg-blue-600 text-white"
-                  : "bg-white border border-gray-300 hover:bg-gray-50"
+                  ? "bg-gradient-to-r from-white to-gray-400 text-black"
+                  : "bg-black border border-gray-700 text-gray-300 hover:border-gray-600"
               }`}
             >
               {num}
@@ -116,7 +116,7 @@ export function RatingForm({ promptId, onSuccess }: RatingFormProps) {
       </div>
 
       <div>
-        <label htmlFor="comment" className="block text-sm font-medium mb-1">
+        <label htmlFor="comment" className="block text-sm font-medium mb-1 text-gray-300">
           Comment (optional)
         </label>
         <textarea
@@ -124,7 +124,7 @@ export function RatingForm({ promptId, onSuccess }: RatingFormProps) {
           rows={3}
           value={formData.comment}
           onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 bg-black border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-600 text-white placeholder-gray-500"
           placeholder="Share your thoughts about this prompt..."
         />
       </div>
@@ -132,7 +132,7 @@ export function RatingForm({ promptId, onSuccess }: RatingFormProps) {
       <button
         type="submit"
         disabled={isSubmitting || formData.score === 0}
-        className="w-full px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+        className="w-full px-6 py-2 bg-gradient-to-r from-gray-700 to-gray-900 text-white rounded-md hover:from-gray-600 hover:to-gray-800 border border-gray-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isSubmitting ? "Submitting..." : "Submit Rating"}
       </button>

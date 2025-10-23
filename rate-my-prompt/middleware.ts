@@ -6,6 +6,12 @@ const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/api/webhooks(.*)", // For Clerk webhooks
+  "/api/categories", // Public - anyone can view categories
+  "/api/prompts", // Public - anyone can view prompts
+  "/api/prompts/[id]", // Public - anyone can view individual prompts
+  "/api/prompts/[id]/ratings", // Public GET only - POST requires auth (handled in API)
+  "/prompt/[id]", // Public - anyone can view prompt pages
+  // Note: /prompt/new is protected (requires auth)
 ]);
 
 export default clerkMiddleware(async (auth, request) => {

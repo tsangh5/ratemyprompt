@@ -18,15 +18,28 @@ model User {
   ratings   Rating[]
 }
 
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  icon        String?  // Emoji or icon identifier
+  color       String?  // Hex color code
+  prompts     Prompt[]
+  createdAt   DateTime @default(now())
+}
+
 model Prompt {
-  id        String   @id @default(cuid())
-  title     String
-  text      String
-  tags      String[] // Postgres array
-  authorId  String?
-  author    User?     @relation(fields: [authorId], references: [id])
-  ratings   Rating[]
-  createdAt DateTime @default(now())
+  id         String    @id @default(cuid())
+  title      String
+  text       String
+  tags       String[]  // Postgres array
+  authorId   String?
+  author     User?     @relation(fields: [authorId], references: [id])
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
+  ratings    Rating[]
+  createdAt  DateTime  @default(now())
 }
 
 model Rating {
