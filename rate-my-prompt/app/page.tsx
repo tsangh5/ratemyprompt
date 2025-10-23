@@ -1,7 +1,7 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
 interface Rating {
@@ -32,7 +32,7 @@ interface Prompt {
   category: Category | null;
 }
 
-export default function HomePage() {
+function HomePageContent() {
   const searchParams = useSearchParams();
   const categoryId = searchParams.get("category");
   const searchQuery = searchParams.get("search");
@@ -146,6 +146,14 @@ export default function HomePage() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={<main className="min-h-screen bg-black" />}>
+      <HomePageContent />
+    </Suspense>
   );
 }
 

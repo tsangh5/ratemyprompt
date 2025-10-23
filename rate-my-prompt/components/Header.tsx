@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { UserButton, SignInButton, useUser } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 interface Category {
@@ -16,7 +16,7 @@ interface Category {
   };
 }
 
-export function Header() {
+function HeaderContent() {
   const { isSignedIn } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -139,5 +139,17 @@ export function Header() {
         )}
       </div>
     </header>
+  );
+}
+
+export function Header() {
+  return (
+    <Suspense fallback={
+      <header className="bg-gradient-to-r from-black via-gray-900 to-black border-b border-gray-800">
+        <div className="max-w-7xl mx-auto px-8 py-4" />
+      </header>
+    }>
+      <HeaderContent />
+    </Suspense>
   );
 }

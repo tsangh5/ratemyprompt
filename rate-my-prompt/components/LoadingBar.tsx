@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
-export function LoadingBar() {
+function LoadingBarImpl() {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const pathname = usePathname();
@@ -39,4 +39,8 @@ export function LoadingBar() {
       />
     </div>
   );
+}
+
+export function LoadingBar() {
+  return <LoadingBarImpl />;
 }
