@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Suspense } from "react";
 import { Providers } from "./providers";
 import { Header } from "@/components/Header";
 import { LoadingBar } from "@/components/LoadingBar";
@@ -33,7 +34,9 @@ export default function RootLayout({
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
           <Providers>
-            <LoadingBar />
+            <Suspense fallback={null}>
+              <LoadingBar />
+            </Suspense>
             <Header />
             {children}
           </Providers>
