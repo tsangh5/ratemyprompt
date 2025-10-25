@@ -66,7 +66,7 @@ export async function POST(req: Request) {
   try {
     const { userId } = await auth();
     const body = await req.json();
-    const { title, text, tags, categoryId } = body;
+    const { title, text, tags, categoryId, llms } = body;
 
     // If user is authenticated, ensure they exist in our database
     if (userId) {
@@ -101,6 +101,7 @@ export async function POST(req: Request) {
         title,
         text,
         tags,
+        llms: llms || [],
         categoryId: categoryId || null,
         authorId: userId || null
       },

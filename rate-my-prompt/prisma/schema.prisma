@@ -34,6 +34,7 @@ model Prompt {
   title      String
   text       String
   tags       String[]  // Postgres array
+  llms       String[]  // LLMs used for this prompt
   authorId   String?
   author     User?     @relation(fields: [authorId], references: [id])
   categoryId String?

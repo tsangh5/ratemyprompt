@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { getLLMsByIds } from "@/lib/llms";
 
 interface Rating {
   id: string;
@@ -23,6 +24,7 @@ interface Prompt {
   title: string;
   text: string;
   tags: string[];
+  llms: string[];
   createdAt: string;
   ratings: Rating[];
   author: {
@@ -53,10 +55,35 @@ function HomePageContent() {
     },
   });
 
+  const { data: categories } = useQuery<Category[]>({
+    queryKey: ["categories"],
+    queryFn: () => fetch("/api/categories").then((r) => r.json()),
+  });
+
+  const { data: trendingPrompts } = useQuery<Prompt[]>({
+    queryKey: ["prompts", "trending"],
+    queryFn: () => fetch("/api/prompts?categoryId=trending").then((r) => r.json()),
+    enabled: !categoryId && !searchQuery, // Only fetch when viewing "All"
+  });
+
   // Refetch when component mounts (e.g., when navigating back)
   useEffect(() => {
     refetch();
   }, [refetch]);
+
+  // Group prompts by category when viewing "All"
+  const promptsByCategory = prompts && !categoryId && !searchQuery
+    ? categories?.reduce((acc, category) => {
+        const categoryPrompts = prompts.filter(p => p.category?.id === category.id);
+        if (categoryPrompts.length > 0) {
+          acc[category.id] = {
+            category,
+            prompts: categoryPrompts.slice(0, 10), // Top 10 per category
+          };
+        }
+        return acc;
+      }, {} as Record<string, { category: Category; prompts: Prompt[] }>)
+    : null;
 
   if (isLoading) {
     return <main className="min-h-screen bg-black" />;
@@ -64,7 +91,7 @@ function HomePageContent() {
 
   return (
     <main className="min-h-screen bg-black">
-      <div className="max-w-4xl mx-auto p-8">
+      <div className={promptsByCategory ? "max-w-7xl mx-auto p-8" : "max-w-4xl mx-auto p-8"}>
         {error ? (
           <div className="text-center py-12">
             <p className="text-red-400 mb-2">Failed to load prompts</p>
@@ -78,7 +105,138 @@ function HomePageContent() {
           </div>
         ) : !prompts ? (
           <div className="text-center py-12 text-gray-500">No data available</div>
+        ) : promptsByCategory ? (
+          // Category sections with carousels for "All" view
+          <div className="space-y-12">
+            {/* Trending Section */}
+            {trendingPrompts && trendingPrompts.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-bold text-white">
+                    Trending
+                  </h2>
+                  <Link
+                    href="/?category=trending"
+                    className="text-sm text-gray-400 hover:text-white transition-colors"
+                  >
+                    View all →
+                  </Link>
+                </div>
+                <div className="overflow-x-auto scrollbar-hide -mx-8 px-8">
+                  <div className="flex gap-6 pb-4">
+                    {trendingPrompts.slice(0, 10).map((prompt) => (
+                      <Link
+                        key={prompt.id}
+                        href={`/prompt/${prompt.id}`}
+                        className="flex-none w-80 p-6 bg-gradient-to-br from-gray-900 to-black border border-gray-800 rounded-lg hover:border-gray-600 hover:shadow-xl hover:shadow-gray-900/50 transition-all"
+                      >
+                        <div className="flex flex-col h-full">
+                          <h3 className="text-lg font-semibold mb-2 text-white line-clamp-2">{prompt.title}</h3>
+                          <p className="text-gray-400 text-sm line-clamp-3 mb-4 flex-1">{prompt.text}</p>
+                          <div className="flex items-center justify-between mt-auto">
+                            {prompt.llms && prompt.llms.length > 0 && (
+                              <div className="flex items-center gap-1.5">
+                                {getLLMsByIds(prompt.llms).slice(0, 4).map((llm) => (
+                                  <div key={llm.id} className="w-9 h-9 bg-white rounded flex items-center justify-center p-0.5" title={llm.name}>
+                                    <img
+                                      src={llm.logo}
+                                      alt={llm.name}
+                                      className="w-full h-full object-contain"
+                                      onError={(e) => {
+                                        if (llm.logoFallback && e.currentTarget.src !== llm.logoFallback) {
+                                          e.currentTarget.src = llm.logoFallback;
+                                        } else {
+                                          e.currentTarget.style.display = "none";
+                                        }
+                                      }}
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            <div className="text-right">
+                              <div className="text-2xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+                                {computeAvg(prompt.ratings)}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {prompt.ratings.length} {prompt.ratings.length === 1 ? "rating" : "ratings"}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Category Sections */}
+            {Object.values(promptsByCategory).map(({ category, prompts }) => (
+              <div key={category.id}>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-bold text-white">
+                    {category.name}
+                  </h2>
+                  <Link
+                    href={`/?category=${category.id}`}
+                    className="text-sm text-gray-400 hover:text-white transition-colors"
+                  >
+                    View all →
+                  </Link>
+                </div>
+                <div className="overflow-x-auto scrollbar-hide -mx-8 px-8">
+                  <div className="flex gap-6 pb-4">
+                    {prompts.map((prompt) => (
+                      <Link
+                        key={prompt.id}
+                        href={`/prompt/${prompt.id}`}
+                        className="flex-none w-80 p-6 bg-gradient-to-br from-gray-900 to-black border border-gray-800 rounded-lg hover:border-gray-600 hover:shadow-xl hover:shadow-gray-900/50 transition-all"
+                      >
+                        <div className="flex flex-col h-full">
+                          <h3 className="text-lg font-semibold mb-2 text-white line-clamp-2">{prompt.title}</h3>
+                          <p className="text-gray-400 text-sm line-clamp-3 mb-4 flex-1">{prompt.text}</p>
+
+                          <div className="flex items-center justify-between mt-auto">
+                            {prompt.llms && prompt.llms.length > 0 && (
+                              <div className="flex items-center gap-1.5">
+                                {getLLMsByIds(prompt.llms).slice(0, 4).map((llm) => (
+                                  <div key={llm.id} className="w-9 h-9 bg-white rounded flex items-center justify-center p-0.5" title={llm.name}>
+                                    <img
+                                      src={llm.logo}
+                                      alt={llm.name}
+                                      className="w-full h-full object-contain"
+                                      onError={(e) => {
+                                        if (llm.logoFallback && e.currentTarget.src !== llm.logoFallback) {
+                                          e.currentTarget.src = llm.logoFallback;
+                                        } else {
+                                          e.currentTarget.style.display = "none";
+                                        }
+                                      }}
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            <div className="text-right">
+                              <div className="text-2xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+                                {computeAvg(prompt.ratings)}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {prompt.ratings.length} {prompt.ratings.length === 1 ? "rating" : "ratings"}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         ) : prompts.length > 0 ? (
+          // Regular grid view for filtered results
           <div className="grid gap-6">
             {prompts.map((prompt) => (
               <Link
@@ -88,37 +246,29 @@ function HomePageContent() {
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      {prompt.category && (
-                        <span className="px-2 py-1 bg-gradient-to-r from-gray-700 to-gray-900 text-gray-300 text-xs rounded border border-gray-600">
-                          {prompt.category.name}
-                        </span>
-                      )}
-                    </div>
                     <h2 className="text-xl font-semibold mb-2 text-white">{prompt.title}</h2>
-                    <p className="text-gray-400 line-clamp-3 mb-3">{prompt.text}</p>
+                    <p className="text-gray-400 line-clamp-3 mb-4">{prompt.text}</p>
 
-                    {prompt.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {prompt.tags.map((tag, idx) => (
-                          <span
-                            key={idx}
-                            className="px-2 py-1 bg-gradient-to-r from-gray-800 to-gray-900 text-gray-300 text-sm rounded border border-gray-700"
-                          >
-                            {tag}
-                          </span>
+                    {prompt.llms && prompt.llms.length > 0 && (
+                      <div className="flex items-center gap-2">
+                        {getLLMsByIds(prompt.llms).map((llm) => (
+                          <div key={llm.id} className="w-8 h-8 bg-white rounded flex items-center justify-center p-0.5" title={llm.name}>
+                            <img
+                              src={llm.logo}
+                              alt={llm.name}
+                              className="w-full h-full object-contain"
+                              onError={(e) => {
+                                if (llm.logoFallback && e.currentTarget.src !== llm.logoFallback) {
+                                  e.currentTarget.src = llm.logoFallback;
+                                } else {
+                                  e.currentTarget.style.display = "none";
+                                }
+                              }}
+                            />
+                          </div>
                         ))}
                       </div>
                     )}
-
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <span>
-                        By {prompt.author?.name || "Anonymous"}
-                      </span>
-                      <span>
-                        {new Date(prompt.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
                   </div>
 
                   <div className="ml-4 text-center">

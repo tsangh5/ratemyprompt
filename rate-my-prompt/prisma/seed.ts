@@ -89,18 +89,21 @@ async function seedPrompts() {
       title: "Write a Blog Post",
       text: "Write a comprehensive blog post about [TOPIC] that includes an engaging introduction, 3-5 main points with examples, and a strong conclusion with a call to action.",
       tags: ["writing", "blogging", "content"],
+      llms: ["claude-3.5-sonnet", "gpt-4o"],
       categoryId: categories.find(c => c.slug === "creative-writing")?.id,
     },
     {
       title: "Debug Python Code",
       text: "I have the following Python code that's throwing an error. Can you help me identify the issue and provide a corrected version?\n\n[PASTE YOUR CODE HERE]",
       tags: ["python", "debugging", "code-review"],
+      llms: ["gpt-4", "claude-3-opus", "deepseek-coder"],
       categoryId: categories.find(c => c.slug === "code-development")?.id,
     },
     {
       title: "Create Marketing Email",
       text: "Create a compelling marketing email for [PRODUCT/SERVICE] that highlights its key benefits, addresses customer pain points, and includes a clear CTA. Keep it under 200 words.",
       tags: ["email", "marketing", "copywriting"],
+      llms: ["claude-3.5-sonnet", "gpt-4-turbo"],
       categoryId: categories.find(c => c.slug === "business-marketing")?.id,
     },
   ];

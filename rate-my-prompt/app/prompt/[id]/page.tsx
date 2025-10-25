@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { RatingForm } from "@/components/RatingForm";
 import { RatingsList } from "@/components/RatingsList";
+import { getLLMsByIds } from "@/lib/llms";
 
 interface Rating {
   id: string;
@@ -32,6 +33,7 @@ interface Prompt {
   title: string;
   text: string;
   tags: string[];
+  llms: string[];
   createdAt: string;
   ratings: Rating[];
   author: {
@@ -100,13 +102,40 @@ export default function PromptDetailPage() {
         </button>
 
         <div className="bg-gradient-to-br from-gray-900 to-black border border-gray-800 rounded-lg p-6 mb-8">
-          {prompt.category && (
-            <div className="mb-3">
+          <div className="flex items-center gap-3 mb-3 flex-wrap">
+            {prompt.category && (
               <span className="inline-block px-3 py-1 bg-gradient-to-r from-gray-700 to-gray-900 text-gray-300 text-sm rounded border border-gray-600">
                 {prompt.category.name}
               </span>
-            </div>
-          )}
+            )}
+            {prompt.llms && prompt.llms.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500">Tested with:</span>
+                <div className="flex items-center gap-1.5">
+                  {getLLMsByIds(prompt.llms).map((llm) => (
+                    <div key={llm.id} className="flex items-center gap-1.5 px-2 py-1 bg-black border border-gray-700 rounded">
+                      <div className="w-4 h-4 bg-white rounded flex items-center justify-center p-0.5">
+                        <img
+                          src={llm.logo}
+                          alt={llm.name}
+                          title={llm.name}
+                          className="w-full h-full object-contain"
+                          onError={(e) => {
+                            if (llm.logoFallback && e.currentTarget.src !== llm.logoFallback) {
+                              e.currentTarget.src = llm.logoFallback;
+                            } else {
+                              e.currentTarget.style.display = "none";
+                            }
+                          }}
+                        />
+                      </div>
+                      <span className="text-xs text-gray-400">{llm.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
           <h1 className="text-3xl font-bold mb-4 text-white">{prompt.title}</h1>
 

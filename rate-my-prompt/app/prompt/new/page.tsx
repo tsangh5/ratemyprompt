@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useUser, SignInButton } from "@clerk/nextjs";
+import { LLMS } from "@/lib/llms";
 
 interface Category {
   id: string;
@@ -18,11 +19,13 @@ export default function NewPromptPage() {
   const queryClient = useQueryClient();
   const { isSignedIn, isLoaded } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     text: "",
     tags: "",
     categoryId: "",
+    llms: [] as string[],
   });
 
   const { data: categories } = useQuery<Category[]>({
@@ -70,8 +73,41 @@ export default function NewPromptPage() {
     );
   }
 
+  const handleLLMToggle = (llmId: string) => {
+    setError(null); // Clear error when user interacts
+    setFormData((prev) => ({
+      ...prev,
+      llms: prev.llms.includes(llmId)
+        ? prev.llms.filter((id) => id !== llmId)
+        : [...prev.llms, llmId],
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+
+    // Validation
+    if (!formData.categoryId) {
+      setError("Please select a category");
+      return;
+    }
+
+    if (formData.llms.length === 0) {
+      setError("Please select at least one LLM");
+      return;
+    }
+
+    if (!formData.title.trim()) {
+      setError("Please enter a title");
+      return;
+    }
+
+    if (!formData.text.trim()) {
+      setError("Please enter prompt text");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -85,10 +121,14 @@ export default function NewPromptPage() {
           text: formData.text,
           tags: formData.tags.split(",").map((tag) => tag.trim()).filter(Boolean),
           categoryId: formData.categoryId || null,
+          llms: formData.llms,
         }),
       });
 
-      if (!response.ok) throw new Error("Failed to create prompt");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to create prompt");
+      }
 
       const prompt = await response.json();
 
@@ -98,7 +138,7 @@ export default function NewPromptPage() {
       router.push(`/prompt/${prompt.id}`);
     } catch (error) {
       console.error("Error creating prompt:", error);
-      alert("Failed to create prompt. Please try again.");
+      setError(error instanceof Error ? error.message : "Failed to create prompt. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -108,6 +148,12 @@ export default function NewPromptPage() {
     <div className="min-h-screen bg-black">
       <div className="max-w-2xl mx-auto p-6">
         <h1 className="text-3xl font-bold mb-6 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">Create New Prompt</h1>
+
+        {error && (
+          <div className="bg-red-900/30 border border-red-600 text-red-200 px-4 py-3 rounded-lg mb-6">
+            <p className="font-medium">{error}</p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4 bg-gradient-to-br from-gray-900 to-black border border-gray-800 rounded-lg p-6">
           <div>
@@ -124,10 +170,53 @@ export default function NewPromptPage() {
               <option value="">Select a category</option>
               {categories?.map((category) => (
                 <option key={category.id} value={category.id}>
-                  {category.icon} {category.name}
+                  {category.name}
                 </option>
               ))}
             </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-300">
+              LLMs Tested * (Select one or more)
+            </label>
+            <div className={`grid grid-cols-2 gap-2 max-h-60 overflow-y-auto p-3 bg-black border rounded-md ${
+              error && formData.llms.length === 0 ? "border-red-600" : "border-gray-700"
+            }`}>
+              {LLMS.map((llm) => (
+                <button
+                  key={llm.id}
+                  type="button"
+                  onClick={() => handleLLMToggle(llm.id)}
+                  className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-all ${
+                    formData.llms.includes(llm.id)
+                      ? "bg-gradient-to-r from-gray-700 to-gray-800 border border-gray-600"
+                      : "bg-gray-900 border border-gray-800 hover:border-gray-700"
+                  }`}
+                >
+                  <div className="w-5 h-5 bg-white rounded flex items-center justify-center p-0.5">
+                    <img
+                      src={llm.logo}
+                      alt={llm.name}
+                      className="w-full h-full object-contain"
+                      onError={(e) => {
+                        if (llm.logoFallback && e.currentTarget.src !== llm.logoFallback) {
+                          e.currentTarget.src = llm.logoFallback;
+                        } else {
+                          e.currentTarget.style.display = "none";
+                        }
+                      }}
+                    />
+                  </div>
+                  <span className="text-sm text-gray-300">{llm.name}</span>
+                </button>
+              ))}
+            </div>
+            {formData.llms.length === 0 && (
+              <p className={`text-xs mt-1 ${error ? "text-red-400" : "text-gray-500"}`}>
+                Please select at least one LLM
+              </p>
+            )}
           </div>
 
           <div>
