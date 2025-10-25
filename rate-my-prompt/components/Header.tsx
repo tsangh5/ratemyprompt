@@ -111,7 +111,7 @@ function HeaderContent() {
         <div className="py-4 pb-0 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
             <Logo className="w-11 h-8 text-white transition-transform group-hover:scale-105 self-end mt-1.5" />
-            <span className="text-2xl font-bold text-white whitespace-nowrap">
+            <span className="hidden md:inline text-2xl font-bold text-white whitespace-nowrap">
               Rate My Prompt
             </span>
           </Link>
@@ -154,7 +154,8 @@ function HeaderContent() {
               href="/prompt/new"
               className="text-gray-300 hover:text-white transition-colors whitespace-nowrap"
             >
-              Create
+              <span className="md:hidden text-xl">+</span>
+              <span className="hidden md:inline">Create</span>
             </Link>
 
             {isSignedIn ? (
